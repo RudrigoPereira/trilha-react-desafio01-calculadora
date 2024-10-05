@@ -13,18 +13,23 @@ export const Container = styled.div`
 
 export const Content = styled.div`
     background-color: #FFFFFF;
+    border-radius: 10px;
     width: 50%;
 `
 
 export const Row = styled.div`
-    display:flex;
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 `
+export const InternalRow = styled.div`
+    width: 75%;
+    display: flex;
+`
 
 export const Column = styled.div`
-    display:flex;
+    display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;

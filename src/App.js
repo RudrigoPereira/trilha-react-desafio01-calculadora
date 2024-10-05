@@ -1,102 +1,132 @@
-
 import Input from './components/Input';
 import Button from './components/Button';
 
-import { Container, Content, Row } from './styles';
+import { Container, Content, Row, InternalRow } from './styles';
 import { useState } from 'react';
-
 
 const App = () => {
   const [currentNumber, setCurrentNumber] = useState('0');
   const [firstNumber, setFirstNumber] = useState('0');
   const [operation, setOperation] = useState('');
+  const [expression, setExpression] = useState('');
+  const [isResultShown, setIsResultShown] = useState(false);
 
   const handleOnClear = () => {
-    setCurrentNumber('0')
-    setFirstNumber('0')
-    setOperation('')
+    setCurrentNumber('0');
+    setFirstNumber('0');
+    setOperation('');
+    setExpression('');
   };
 
   const handleAddNumber = (num) => {
-    setCurrentNumber(prev => `${prev === '0' ? '' : prev}${num}`)
-  }
+    if (isResultShown) {
+      handleOnClear();
+      setIsResultShown(false);
+    }
+    setCurrentNumber(prev => (['0', '+', '-', 'x', '÷'].includes(prev) ? num : `${prev}${num}`));
+    setExpression(prev => prev === '0' ? num : `${prev}${num}`);
+  };
 
-  const handleSumNumbers = () => {
+  const performPendingOperation = () => {
+    const operations = {
+      '+': (a, b) => a + b,
+      '-': (a, b) => a - b,
+      'x': (a, b) => a * b,
+      '÷': (a, b) => {
+        if (currentNumber === '0') {
+          alert('Cannot divide by zero');
+          return currentNumber;
+        }
+        return a / b;
+      },
+    };
 
-    if(firstNumber === '0'){
-        setFirstNumber(String(currentNumber));
-        setCurrentNumber('0')
-        setOperation('+')
-    }else {
-      const sum = Number(firstNumber) + Number(currentNumber);
-      setCurrentNumber(String(sum))
-      setOperation('')
+    if (operation && firstNumber !== '0' && !['+', '-', 'x', '÷'].includes(currentNumber)) {
+      const result = operations[operation](Number(firstNumber), Number(currentNumber));
+      setCurrentNumber(String(result));
+      setFirstNumber(String(result));
+      setExpression(`${firstNumber} ${operation} ${currentNumber} = ${result}`);
+      setOperation('');
+    }
+  };
+
+  const handleOperation = (operationType) => {
+    if (isResultShown) {
+      setExpression(currentNumber);
+      setIsResultShown(false);
     }
 
-  }
+    if (currentNumber === '0' && firstNumber === '0') return;
 
-  const handleMinusNumbers = () => {
+    if (['+', '-', 'x', '÷'].includes(currentNumber)) {
+      setOperation(operationType);
+      setCurrentNumber(operationType);
+      setExpression(prev => prev.slice(0, -1) + operationType);
+      return;
+    } 
 
-    if(firstNumber === '0'){
-        setFirstNumber(String(currentNumber));
-        setCurrentNumber('0')
-        setOperation('-')
-    }else {
-      const sum = Number(firstNumber) - Number(currentNumber);
-      setCurrentNumber(String(sum))
-      setOperation('')
+    performPendingOperation();
+
+    if (firstNumber === '0') {
+      setFirstNumber(currentNumber);
+      setCurrentNumber(operationType);
+      setOperation(operationType);
+      setExpression(prev => `${prev} ${operationType}`);
+    } else {
+      setCurrentNumber(operationType);
+      setOperation(operationType);
+      setExpression(prev => `${prev} ${operationType}`);
     }
+  };
 
-  }
+  const handleSumNumbers = () => handleOperation('+');
+  const handleMinusNumbers = () => handleOperation('-');
+  const handleMultNumbers = () => handleOperation('x');
+  const handleDivNumbers = () => handleOperation('÷');
 
   const handleEquals = () => {
+    performPendingOperation();
+    setExpression('');
+    setIsResultShown(true);
+  };
 
-    if(firstNumber !== '0' && operation !== '' && currentNumber !== '0'){
-        switch(operation){
-          case '+':
-            handleSumNumbers();
-            break;
-          case '-':
-            handleMinusNumbers();
-            break;
-          default: 
-            break;
-        }
-    }
-
-  }
+  const renderNumberButtons = (numbers) => {
+    return numbers.map((num) => (
+      <Button key={num} label={num} onClick={() => handleAddNumber(num)} />
+    ));
+  };
 
   return (
     <Container>
       <Content>
-        <Input value={currentNumber}/>
+        <Input value={expression || currentNumber} />
         <Row>
-          <Button label="x"/>
-          <Button label="/"/>
-          <Button label="c" onClick={handleOnClear}/>
-          <Button label="."/>
+          <InternalRow>
+            <Button label="C" onClick={handleOnClear} color='darkorange' />
+          </InternalRow>
+          <Button label="÷" onClick={handleDivNumbers} color='darkorange' />
         </Row>
         <Row>
-          <Button label="7" onClick={() => handleAddNumber('7')}/>
-          <Button label="8" onClick={() => handleAddNumber('8')}/>
-          <Button label="9" onClick={() => handleAddNumber('9')}/>
-          <Button label="-" onClick={handleMinusNumbers}/>
+          {renderNumberButtons(['7', '8', '9'])}
+          <Button label="x" onClick={handleMultNumbers} color='darkorange' />
         </Row>
         <Row>
-          <Button label="4" onClick={() => handleAddNumber('4')}/>
-          <Button label="5" onClick={() => handleAddNumber('5')}/>
-          <Button label="6" onClick={() => handleAddNumber('6')}/>
-          <Button label="+" onClick={handleSumNumbers}/>
+          {renderNumberButtons(['4', '5', '6'])}
+          <Button label="-" onClick={handleMinusNumbers} color='darkorange' />
         </Row>
         <Row>
-          <Button label="1" onClick={() => handleAddNumber('1')}/>
-          <Button label="2" onClick={() => handleAddNumber('2')}/>
-          <Button label="3" onClick={() => handleAddNumber('3')}/>
-          <Button label="=" onClick={handleEquals}/>
+          {renderNumberButtons(['1', '2', '3'])}
+          <Button label="+" onClick={handleSumNumbers} color='darkorange' />
+        </Row>
+        <Row>
+          <InternalRow>
+            <Button label="0" onClick={() => handleAddNumber('0')} />
+          </InternalRow>
+          <Button label="=" onClick={handleEquals} color='darkorange' />
         </Row>
       </Content>
     </Container>
   );
-}
+};
 
 export default App;
